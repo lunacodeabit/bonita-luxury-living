@@ -114,30 +114,7 @@ function App() {
   const [submitted, setSubmitted] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [language, setLanguage] = useState<'es' | 'en'>('es')
-  const [microFx, setMicroFx] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('bonita_micro_fx')
-      return saved !== null ? saved === 'true' : true
-    } catch {
-      return true
-    }
-  })
-  const [cursorText, setCursorText] = useState('')
-  const [cursorActive, setCursorActive] = useState(false)
-  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 })
-  const [ringPos, setRingPos] = useState({ x: -100, y: -100 })
-  const [activeSection, setActiveSection] = useState('top')
   const en = language === 'en'
-
-  const toggleMicroFx = () => {
-    const next = !microFx
-    setMicroFx(next)
-    try {
-      localStorage.setItem('bonita_micro_fx', String(next))
-    } catch (e) {
-      console.error(e)
-    }
-  }
 
   const openModal = (title?: string) => {
     setModalTitle(title || (en ? 'Book a Private Tour' : 'Agenda tu Tour Privado'))
@@ -188,128 +165,9 @@ function App() {
     }
   }
 
-  // Smooth lerp magnetic cursor
-  useEffect(() => {
-    if (!microFx) return
-
-    let mouseX = -100
-    let mouseY = -100
-    let currentX = -100
-    let currentY = -100
-    let animationId: number
-
-    const onMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX
-      mouseY = e.clientY
-      setCursorPos({ x: mouseX, y: mouseY })
-
-      // Detect hover target
-      const target = (e.target as HTMLElement)?.closest('[data-cursor], button, a, .project-card, .pillar-card, .builder-card')
-      if (target) {
-        setCursorActive(true)
-        const customText = target.getAttribute('data-cursor') || ''
-        setCursorText(customText)
-      } else {
-        setCursorActive(false)
-        setCursorText('')
-      }
-    }
-
-    const onMouseLeave = () => {
-      setCursorActive(false)
-      setCursorText('')
-    }
-
-    const render = () => {
-      currentX += (mouseX - currentX) * 0.18
-      currentY += (mouseY - currentY) * 0.18
-      setRingPos({ x: currentX, y: currentY })
-      animationId = requestAnimationFrame(render)
-    }
-
-    window.addEventListener('mousemove', onMouseMove, { passive: true })
-    document.addEventListener('mouseleave', onMouseLeave)
-    animationId = requestAnimationFrame(render)
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      document.removeEventListener('mouseleave', onMouseLeave)
-      cancelAnimationFrame(animationId)
-    }
-  }, [microFx])
-
-  // 3D Tilt and Magnetic Pull Effect
-  useEffect(() => {
-    if (!microFx) return
-
-    // Magnetic buttons
-    const magneticElements = document.querySelectorAll<HTMLElement>('.solid-gold-btn, .glass-btn, .card-cta-btn, .logo-box, .fx-switch-pill')
-    const cleanups: (() => void)[] = []
-
-    magneticElements.forEach((el) => {
-      const onMove = (e: MouseEvent) => {
-        const rect = el.getBoundingClientRect()
-        const x = e.clientX - (rect.left + rect.width / 2)
-        const y = e.clientY - (rect.top + rect.height / 2)
-        el.style.transform = `translate(${x * 0.22}px, ${y * 0.22}px)`
-      }
-      const onLeave = () => {
-        el.style.transform = 'translate(0px, 0px)'
-      }
-      el.addEventListener('mousemove', onMove)
-      el.addEventListener('mouseleave', onLeave)
-      cleanups.push(() => {
-        el.removeEventListener('mousemove', onMove)
-        el.removeEventListener('mouseleave', onLeave)
-        el.style.transform = ''
-      })
-    })
-
-    // 3D Card Tilt
-    const tiltElements = document.querySelectorAll<HTMLElement>('.project-card, .pillar-card, .builder-card, .adv-card')
-    tiltElements.forEach((card) => {
-      const onCardMove = (e: MouseEvent) => {
-        const rect = card.getBoundingClientRect()
-        const cardX = e.clientX - rect.left
-        const cardY = e.clientY - rect.top
-        const centerX = rect.width / 2
-        const centerY = rect.height / 2
-        const rotateX = ((cardY - centerY) / centerY) * -5
-        const rotateY = ((cardX - centerX) / centerX) * 5
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`
-      }
-      const onCardLeave = () => {
-        card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)'
-      }
-      card.addEventListener('mousemove', onCardMove)
-      card.addEventListener('mouseleave', onCardLeave)
-      cleanups.push(() => {
-        card.removeEventListener('mousemove', onCardMove)
-        card.removeEventListener('mouseleave', onCardLeave)
-        card.style.transform = ''
-      })
-    })
-
-    return () => {
-      cleanups.forEach((fn) => fn())
-    }
-  }, [microFx, language, scrolled])
-
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 40)
-
-      // Active section spy
-      const sections = ['top', 'story', 'projects', 'builders', 'advantage', 'advisors', 'contact-footer']
-      for (const sectionId of sections) {
-        const el = document.getElementById(sectionId)
-        if (el) {
-          const rect = el.getBoundingClientRect()
-          if (rect.top <= window.innerHeight * 0.45 && rect.bottom >= window.innerHeight * 0.2) {
-            setActiveSection(sectionId)
-          }
-        }
-      }
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -344,94 +202,7 @@ function App() {
   }, [])
 
   return (
-    <main className={microFx ? 'micro-fx-active' : 'micro-fx-disabled'}>
-      {/* Custom Magnetic Luxury Cursor */}
-      {microFx && (
-        <div className="custom-cursor-container" aria-hidden="true">
-          <div
-            className={`custom-cursor-dot ${cursorActive ? 'active' : ''}`}
-            style={{ transform: `translate3d(${cursorPos.x}px, ${cursorPos.y}px, 0)` }}
-          />
-          <div
-            className={`custom-cursor-ring ${cursorActive ? 'active' : ''}`}
-            style={{ transform: `translate3d(${ringPos.x}px, ${ringPos.y}px, 0)` }}
-          >
-            {cursorText && <span className="cursor-label">{cursorText}</span>}
-          </div>
-        </div>
-      )}
-
-      {/* Right Scroll Progress Timeline */}
-      {microFx && (
-        <div className="scroll-timeline-rail">
-          <a
-            href="#top"
-            className={`rail-dot ${activeSection === 'top' ? 'active' : ''}`}
-            data-label={en ? 'Home' : 'Inicio'}
-          >
-            <span className="dot-pip" />
-          </a>
-          <a
-            href="#story"
-            className={`rail-dot ${activeSection === 'story' ? 'active' : ''}`}
-            data-label={en ? 'Vision' : 'Visión'}
-          >
-            <span className="dot-pip" />
-          </a>
-          <a
-            href="#projects"
-            className={`rail-dot ${activeSection === 'projects' ? 'active' : ''}`}
-            data-label={en ? 'Projects' : 'Proyectos'}
-          >
-            <span className="dot-pip" />
-          </a>
-          <a
-            href="#builders"
-            className={`rail-dot ${activeSection === 'builders' ? 'active' : ''}`}
-            data-label={en ? 'Partners' : 'Socios'}
-          >
-            <span className="dot-pip" />
-          </a>
-          <a
-            href="#advantage"
-            className={`rail-dot ${activeSection === 'advantage' ? 'active' : ''}`}
-            data-label={en ? 'Cap Cana' : 'Destino'}
-          >
-            <span className="dot-pip" />
-          </a>
-          <a
-            href="#advisors"
-            className={`rail-dot ${activeSection === 'advisors' ? 'active' : ''}`}
-            data-label={en ? 'Advisors' : 'Asesores'}
-          >
-            <span className="dot-pip" />
-          </a>
-          <a
-            href="#contact-footer"
-            className={`rail-dot ${activeSection === 'contact-footer' ? 'active' : ''}`}
-            data-label={en ? 'Contact' : 'Contacto'}
-          >
-            <span className="dot-pip" />
-          </a>
-        </div>
-      )}
-
-      {/* Floating Micro-Interactions Toggle Widget */}
-      <aside className="fx-switcher-widget">
-        <button
-          className={`fx-switch-pill ${microFx ? 'fx-on' : 'fx-off'}`}
-          onClick={toggleMicroFx}
-          title={en ? 'Click to toggle micro-interactions on/off' : 'Clic para activar/desactivar micro-interacciones'}
-          aria-label="Toggle Micro-Interactions"
-        >
-          <span className="fx-icon">{microFx ? '✦' : '◇'}</span>
-          <span className="fx-text">
-            {en ? 'MICRO-INTERACTIONS:' : 'MICRO-INTERACCIONES:'}{' '}
-            <strong className="fx-status">{microFx ? 'ON' : 'OFF'}</strong>
-          </span>
-          <span className="fx-indicator"></span>
-        </button>
-      </aside>
+    <main>
 
       {/* Header */}
       <header className={scrolled ? 'site-header scrolled' : 'site-header'}>
@@ -450,11 +221,9 @@ function App() {
             {en ? 'HOME' : 'INICIO'}
           </a>
           <a href="#projects" onClick={() => setMenuOpen(false)}>
-            <img className="nav-icon" src={media.alveareIcon} alt="" />
             GOLF
           </a>
           <a href="#projects" onClick={() => setMenuOpen(false)}>
-            <img className="nav-icon" src={media.alveareIcon} alt="" />
             BEACH
           </a>
           <a href="#builders" onClick={() => setMenuOpen(false)}>
@@ -510,7 +279,6 @@ function App() {
 
         <div className="hero-copy">
           <div className="hero-badge">
-            <img src={media.alveareIcon} alt="Alveare" className="hero-badge-icon" />
             <span>BONITA LUXURY LIVING · BY ALVEARE</span>
           </div>
           <h1>
@@ -668,14 +436,7 @@ function App() {
         <div className="project-cards">
           {/* Bonita Golf */}
           <div className="project-card" data-cursor="GOLF">
-            <div className="card-image" style={{ backgroundImage: `url(${media.golf})` }}>
-              {microFx && (
-                <div className="interactive-hotspots">
-                  <span className="hotspot-chip">⛳ Punta Espada Hole 14</span>
-                  <span className="hotspot-chip">🏊 Private Pool</span>
-                </div>
-              )}
-            </div>
+            <div className="card-image" style={{ backgroundImage: `url(${media.golf})` }} />
             <div className="project-badges">
               <span className="status construction">
                 <span className="status-dot orange"></span> {en ? 'Under Construction' : 'En Construcción'}
@@ -705,14 +466,7 @@ function App() {
 
           {/* Bonita Beach */}
           <div className="project-card" data-cursor="BEACH">
-            <div className="card-image" style={{ backgroundImage: `url(${media.beach})` }}>
-              {microFx && (
-                <div className="interactive-hotspots">
-                  <span className="hotspot-chip">🌊 Crystal Lagoons® 10k m²</span>
-                  <span className="hotspot-chip">🏖️ Private Beach</span>
-                </div>
-              )}
-            </div>
+            <div className="card-image" style={{ backgroundImage: `url(${media.beach})` }} />
             <div className="project-badges">
               <span className="status new">
                 <span className="status-dot blue"></span> {en ? 'New Project' : 'Nuevo Proyecto'}
@@ -918,7 +672,6 @@ function App() {
         <div className="max-container">
           <div className="advisors-header">
             <div className="intro-badge">
-              <img src={media.alveareIcon} alt="Alveare" className="hero-badge-icon" />
               <span>04 · {en ? 'PRIVATE ADVISORY' : 'ASESORÍA EXCLUSIVA'}</span>
             </div>
             <h2>
