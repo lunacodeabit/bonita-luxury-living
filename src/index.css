@@ -1,0 +1,57 @@
+:root {
+  --ink: #172a28;
+  --sand: #e9e4da;
+  --sand-light: #f5f3ee;
+  --ocean: #0a3d52;
+  --ocean-dark: #051d2e;
+  --coral: #e07a5f;
+  --coral-light: #f4a261;
+  --gold: #d4a574;
+  --caribbean-sunset: #e76f51;
+  --muted: #7c817b;
+  --line: rgba(23, 42, 40, 0.12);
+  --line-light: rgba(255, 255, 255, 0.15);
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  color-scheme: light;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--sand-light);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--sand-light);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
